@@ -1,7 +1,7 @@
-# Filament External Auth
+# Filament API Login
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/kristiansnts/filament-external-auth.svg?style=flat-square)](https://packagist.org/packages/kristiansnts/filament-external-auth)
-[![Total Downloads](https://img.shields.io/packagist/dt/kristiansnts/filament-external-auth.svg?style=flat-square)](https://packagist.org/packages/kristiansnts/filament-external-auth)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/kristiansnts/filament-api-login.svg?style=flat-square)](https://packagist.org/packages/kristiansnts/filament-api-login)
+[![Total Downloads](https://img.shields.io/packagist/dt/kristiansnts/filament-api-login.svg?style=flat-square)](https://packagist.org/packages/kristiansnts/filament-api-login)
 
 Token-based authentication for FilamentPHP that authenticates against external APIs without requiring local database users.
 
@@ -18,13 +18,13 @@ Token-based authentication for FilamentPHP that authenticates against external A
 You can install the package via Composer:
 
 ```bash
-composer require kristiansnts/filament-external-auth
+composer require kristiansnts/filament-api-login
 ```
 
 Publish the configuration file:
 
 ```bash
-php artisan vendor:publish --tag="filament-external-auth-config"
+php artisan vendor:publish --tag="filament-api-login-config"
 ```
 
 ## Configuration
@@ -34,8 +34,9 @@ php artisan vendor:publish --tag="filament-external-auth-config"
 Add these variables to your `.env` file:
 
 ```env
-FILAMENT_EXTERNAL_AUTH_URL=https://your-api.com/api/auth
-FILAMENT_EXTERNAL_AUTH_TIMEOUT=30
+FILAMENT_API_LOGIN_URL=https://your-api.com/api/auth
+FILAMENT_API_LOGIN_TIMEOUT=30
+FILAMENT_API_LOGIN_LOG_FAILURES=true
 ```
 
 ### 2. Authentication Guard
@@ -63,7 +64,7 @@ Update your Filament Panel Provider to use the external authentication:
 
 namespace App\Providers\Filament;
 
-use Kristiansnts\FilamentExternalAuth\Pages\Auth\Login;
+use Kristiansnts\FilamentApiLogin\Pages\Auth\Login;
 use Filament\Panel;
 use Filament\PanelProvider;
 
@@ -120,7 +121,7 @@ You can customize the API request by extending the `ExternalAuthService`:
 
 namespace App\Services;
 
-use Kristiansnts\FilamentExternalAuth\Services\ExternalAuthService as BaseService;
+use Kristiansnts\FilamentApiLogin\Services\ExternalAuthService as BaseService;
 
 class CustomExternalAuthService extends BaseService
 {
@@ -133,13 +134,21 @@ class CustomExternalAuthService extends BaseService
                 'X-API-Key' => config('app.api_key'),
             ])
             ->post($this->apiUrl, [
-                'username' => $email, // Use 'username' instead of 'email'
+                'email' => $email, // or 'username' => $email
                 'password' => $password,
                 'client_id' => config('app.client_id'),
             ]);
 
         // Custom response handling
-        return $this->handleResponse($response, $email);
+        if ($response->successful()) {
+            $userData = $response->json();
+            
+            if (isset($userData['token']) && isset($userData['data'])) {
+                return $userData;
+            }
+        }
+        
+        return null;
     }
 }
 ```
@@ -148,7 +157,7 @@ Then bind your custom service in a service provider:
 
 ```php
 $this->app->bind(
-    \Kristiansnts\FilamentExternalAuth\Services\ExternalAuthService::class,
+    \Kristiansnts\FilamentApiLogin\Services\ExternalAuthService::class,
     \App\Services\CustomExternalAuthService::class
 );
 ```
@@ -158,7 +167,7 @@ $this->app->bind(
 Override the `canAccessPanel` method in your panel configuration:
 
 ```php
-use Kristiansnts\FilamentExternalAuth\Auth\SessionUser;
+use Kristiansnts\FilamentApiLogin\Auth\SessionUser;
 
 // In your Panel Provider
 ->authGuard('external')
@@ -178,9 +187,9 @@ use Kristiansnts\FilamentExternalAuth\Auth\SessionUser;
 
 The package configuration file includes these options:
 
-- `api_url` - Your external authentication API endpoint
-- `timeout` - API request timeout in seconds
-- `log_failures` - Enable/disable logging of authentication failures
+- `api_url` - Your external authentication API endpoint (env: `FILAMENT_API_LOGIN_URL`)
+- `timeout` - API request timeout in seconds (env: `FILAMENT_API_LOGIN_TIMEOUT`)
+- `log_failures` - Enable/disable logging of authentication failures (env: `FILAMENT_API_LOGIN_LOG_FAILURES`)
 
 ## Security Considerations
 
@@ -196,7 +205,7 @@ The package configuration file includes these options:
 
 ### Common Issues
 
-1. **API Connection Issues**: Check your `FILAMENT_EXTERNAL_AUTH_URL` and network connectivity
+1. **API Connection Issues**: Check your `FILAMENT_API_LOGIN_URL` and network connectivity
 2. **Authentication Failures**: Verify your API response format matches the expected structure
 3. **Session Issues**: Ensure your session driver is properly configured
 
@@ -211,7 +220,7 @@ Enable logging in the configuration to debug authentication issues:
 Or via environment variable:
 
 ```env
-FILAMENT_EXTERNAL_AUTH_LOG_FAILURES=true
+FILAMENT_API_LOGIN_LOG_FAILURES=true
 ```
 
 ## Changelog
