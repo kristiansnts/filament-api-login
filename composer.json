@@ -1,0 +1,45 @@
+{
+    "name": "kristiansnts/filament-api-login",
+    "description": "Token-based authentication for FilamentPHP that authenticates against external APIs without requiring local database users",
+    "type": "library",
+    "keywords": ["laravel", "filament", "authentication", "external-api", "token-auth", "filamentphp"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "kristiansnts",
+            "email": "kristiansnts@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^10.0|^11.0|^12.0",
+        "filament/filament": "^3.0|^4.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0",
+        "phpunit/phpunit": "^10.0|^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Kristiansnts\\FilamentApiLogin\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Kristiansnts\\FilamentApiLogin\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Kristiansnts\\FilamentApiLogin\\FilamentApiLoginServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
